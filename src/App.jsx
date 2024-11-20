@@ -19,6 +19,8 @@ import Doolittle from "./pages/doLittle.jsx";
 import Cholesky from "./pages/Cholesky.jsx";
 import GaussSeidel from "./pages/GaussSeidel.jsx";
 import Vandermonde from "./pages/Vandermonde.jsx";
+import GaussianElimination from "./pages/GaussianElimination.jsx";
+import PartialPivoting from "./pages/PartialPivoting.jsx";
 
 
 export default function App() {
@@ -45,6 +47,8 @@ export default function App() {
                     <Route path="methods/cholesky" element={<Cholesky />} />
                     <Route path="methods/gauss-seidel" element={<GaussSeidel />} />
                     <Route path="methods/vandermonde" element={<Vandermonde />} />
+                    <Route path="methods/gaussian-elimination" element={<GaussianElimination />} />
+                    <Route path="methods/partial-pivoting" element={<PartialPivoting />} />
 
                 </Route>
             </Routes>
