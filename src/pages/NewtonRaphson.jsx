@@ -1,4 +1,5 @@
-import { useState } from "react";
+// pages/NewtonMethod.jsx
+import { useState, useCallback } from "react";
 import RootFindingForm from "../components/RootFindingForm";
 import ResultTable from "../components/ResultTable";
 import DraggableResizableWindow from "../components/DraggableResizableWindow";
@@ -21,20 +22,45 @@ export default function NewtonMethod() {
 
     const { post } = useApi();
 
-    const handleChange = (name, value) => {
+    // Manejar cambios en los campos del formulario
+    const handleChange = useCallback((name, value) => {
         setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    }, []);
 
+    // Validar el formulario antes de enviar
     const validateForm = () => {
         const { eqn, eqn1, xo, tol, niter } = formData;
         if (!eqn || !eqn1 || !xo || !tol || !niter) {
             setError("All fields are required.");
             return false;
         }
+
+        // Verificar si xo, tol y niter son números válidos
+        if (isNaN(parseFloat(xo))) {
+            setError("Initial Guess (x₀) must be a valid number.");
+            return false;
+        }
+        if (isNaN(parseFloat(tol)) || parseFloat(tol) <= 0) {
+            setError("Tolerance must be a valid positive number.");
+            return false;
+        }
+        if (isNaN(parseInt(niter, 10)) || parseInt(niter, 10) <= 0) {
+            setError("Max Iterations must be a valid positive integer.");
+            return false;
+        }
+
+        // Opcional: Verificar si las expresiones contienen caracteres permitidos
+        const allowedChars = /^[\d\w\s\+\-\*\/\^\(\)\.]+$/;
+        if (!allowedChars.test(eqn) || !allowedChars.test(eqn1)) {
+            setError("Functions contain invalid characters.");
+            return false;
+        }
+
         setError("");
         return true;
     };
 
+    // Manejar el envío del formulario
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
@@ -51,9 +77,15 @@ export default function NewtonMethod() {
         };
 
         try {
-            const data = await post("/api/newton", requestData);
-            setResults(data);
+            const response = await post("/newton", requestData);
+            if (response.error) {
+                setError(response.error);
+            } else {
+                setResults(response.result); // Asignar data.result según la estructura de salida
+                console.log("API response:", response);
+            }
         } catch (err) {
+            console.error("Submission error:", err);
             setError(
                 err.message === "Failed to fetch"
                     ? "The server is unavailable. Please try again later."
@@ -64,10 +96,11 @@ export default function NewtonMethod() {
         }
     };
 
+    // Manejar la inserción de valores de prueba
     const handleTestValues = () => {
         setFormData({
-            eqn: "\\ln(\\sin^2(x) + 1) - \\frac{1}{2}",
-            eqn1: "\\frac{2\\sin(x)\\cos(x)}{\\sin^2(x) + 1}",
+            eqn: "ln(sin(x)**2 + 1) - 1/2",
+            eqn1: "(2*sin(x)*cos(x))/(sin(x)**2 + 1)",
             xo: "0.5",
             tol: "1e-7",
             niter: "100",
@@ -76,6 +109,7 @@ export default function NewtonMethod() {
         setError("");
     };
 
+    // Manejar el reinicio del formulario
     const handleReset = () => {
         setFormData({
             eqn: "",
@@ -88,6 +122,7 @@ export default function NewtonMethod() {
         setError("");
     };
 
+    // Manejar la visualización del gráfico
     const handleShowGraph = () => {
         setShowGraph(!showGraph);
     };
@@ -102,11 +137,11 @@ export default function NewtonMethod() {
                 loading={loading}
                 error={error}
                 inputs={[
-                    { name: "eqn", type: "math", label: "Function \( f(x) \):" },
-                    { name: "eqn1", type: "math", label: "Derivative \( f'(x) \):" },
-                    { name: "xo", type: "number", label: "Initial Guess (\( x_0 \)):" },
-                    { name: "tol", type: "number", label: "Tolerance:" },
-                    { name: "niter", type: "number", label: "Max Iterations:" },
+                    { name: "eqn", type: "math", label: "Function \( f(x) \):", placeholder: "e.g., ln(sin(x)**2 + 1) - 1/2" },
+                    { name: "eqn1", type: "math", label: "Derivative \( f'(x) \):", placeholder: "e.g., (2*sin(x)*cos(x))/(sin(x)**2 + 1)" },
+                    { name: "xo", type: "number", label: "Initial Guess (\( x_0 \)):", placeholder: "e.g., 0.5" },
+                    { name: "tol", type: "number", label: "Tolerance:", placeholder: "e.g., 0.001" },
+                    { name: "niter", type: "number", label: "Max Iterations:", placeholder: "e.g., 25" },
                 ]}
                 buttons={[
                     {
@@ -122,8 +157,10 @@ export default function NewtonMethod() {
                 ]}
             />
 
+            {/* Renderizar la Tabla de Resultados */}
             {results && <ResultTable results={results} />}
 
+            {/* Botón para Mostrar/Ocultar el Gráfico */}
             {formData.eqn && (
                 <button
                     onClick={handleShowGraph}
@@ -133,6 +170,7 @@ export default function NewtonMethod() {
                 </button>
             )}
 
+            {/* Ventana Draggable y Resizable para el Gráfico */}
             {showGraph && (
                 <DraggableResizableWindow
                     title="Graph Visualization"
@@ -140,8 +178,8 @@ export default function NewtonMethod() {
                 >
                     <DesmosGraph
                         functions={[
-                            { latex: formData.eqn, color: "blue" },
-                            { latex: formData.eqn1, color: "red" },
+                            { expr: formData.eqn, color: "blue" },
+                            { expr: formData.eqn1, color: "red" },
                         ]}
                     />
                 </DraggableResizableWindow>

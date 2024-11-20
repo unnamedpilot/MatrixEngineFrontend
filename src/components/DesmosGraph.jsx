@@ -1,41 +1,32 @@
+// components/DesmosGraph.jsx
 import React, { useEffect, useRef } from "react";
 import Desmos from "desmos";
 
-
-export default function DesmosGraph({ functions = [] }) {
+export default function DesmosGraph({ functions }) {
+    const desmosDiv = useRef(null);
     const calculatorRef = useRef(null);
-    const desmosContainerRef = useRef(null);
 
     useEffect(() => {
-        if (!calculatorRef.current && desmosContainerRef.current) {
-            calculatorRef.current = Desmos.GraphingCalculator(desmosContainerRef.current, {
+        if (desmosDiv.current) {
+            calculatorRef.current = Desmos.GraphingCalculator(desmosDiv.current, {
                 expressions: true,
+                decimals: 6,
                 keypad: false,
+                settingsMenu: false,
+            });
+
+            // Añadir funciones
+            functions.forEach((func) => {
+                calculatorRef.current.setExpression({ latex: func.expr, color: func.color });
             });
         }
 
-        const calculator = calculatorRef.current;
-
-        // Clear the graph before rendering new functions
-        calculator?.setBlank();
-
-        // Add functions to the graph
-        functions.forEach((fn, index) => {
-            calculator?.setExpression({
-                id: `fn${index}`,
-                latex: fn.latex,
-                color: fn.color || "#000000", // Default to black if color not specified
-            });
-        });
-
         return () => {
-            // Clean up on unmount
             if (calculatorRef.current) {
                 calculatorRef.current.destroy();
-                calculatorRef.current = null;
             }
         };
     }, [functions]);
 
-    return <div ref={desmosContainerRef} style={{ width: "100%", height: "400px" }} />;
+    return <div ref={desmosDiv} style={{ width: "100%", height: "500px" }}></div>;
 }

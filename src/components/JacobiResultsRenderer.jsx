@@ -1,57 +1,113 @@
+// components/JacobiResultsRenderer.jsx
 import React from "react";
-import MatrixRenderer from "../components/MatrixRenderer";
 
 export default function JacobiResultsRenderer({ results }) {
-    if (!results) return null;
-
-    const { transition_matrix, coefficient_matrix, spectral_radius, iterations, converges } =
-        results;
+    console.log("JacobiResultsRenderer received results:", results);
 
     return (
-        <div>
-            <h2 className="text-2xl font-bold mt-8">Results</h2>
+        <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-4">Results</h2>
 
-            {/* Matrices de resultados */}
-            <div className="grid grid-cols-2 gap-4 mb-8">
-                <MatrixRenderer
-                    matrix={transition_matrix}
-                    label="Transition Matrix (T)"
-                    isVector={false}
-                />
-                <MatrixRenderer
-                    matrix={coefficient_matrix}
-                    label="Coefficient Matrix (C)"
-                    isVector={false}
-                />
+            {/* Transition Matrix */}
+            <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-2">Transition Matrix</h3>
+                <table className="table-auto w-full border-collapse border border-gray-300">
+                    <thead>
+                    <tr>
+                        {results.transition_matrix[0].map((_, colIndex) => (
+                            <th
+                                key={colIndex}
+                                className="border border-gray-300 px-4 py-2"
+                            >
+                                {`T[${colIndex + 1}]`}
+                            </th>
+                        ))}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {results.transition_matrix.map((row, rowIndex) => (
+                        <tr key={rowIndex}>
+                            {row.map((value, colIndex) => (
+                                <td
+                                    key={colIndex}
+                                    className="border border-gray-300 px-4 py-2 text-center"
+                                >
+                                    {value}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
             </div>
 
-            {/* Espectro y convergencia */}
-            <div className="mb-4">
-                <h3 className="text-xl font-semibold">Spectral Radius</h3>
-                <p>{spectral_radius.toFixed(6)}</p>
+            {/* Coefficient Matrix */}
+            <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-2">Coefficient Matrix</h3>
+                <table className="table-auto w-full border-collapse border border-gray-300">
+                    <thead>
+                    <tr>
+                        <th className="border border-gray-300 px-4 py-2">C</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {results.coefficient_matrix.map((row, rowIndex) => (
+                        <tr key={rowIndex}>
+                            {row.map((value, colIndex) => (
+                                <td
+                                    key={colIndex}
+                                    className="border border-gray-300 px-4 py-2 text-center"
+                                >
+                                    {value}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
             </div>
-            <div className="mb-4">
-                <h3 className="text-xl font-semibold">Convergence</h3>
-                <p>{converges ? "Yes" : "No"}</p>
+
+            {/* Spectral Radius y Convergencia */}
+            <div className="mb-6">
+                <p className="text-lg">
+                    <strong>Spectral Radius:</strong> {results.spectral_radius.toFixed(6)}
+                </p>
+                <p className="text-lg">
+                    <strong>Converges:</strong> {results.converges ? "Yes" : "No"}
+                </p>
             </div>
 
             {/* Iteraciones */}
-            <div className="mb-8">
-                <h3 className="text-xl font-semibold">Iterations</h3>
-                <div className="space-y-4">
-                    {iterations.map((iteration) => (
-                        <div key={iteration.step} className="border-b pb-2">
-                            <h4 className="font-semibold">Step {iteration.step}</h4>
-                            <p>
-                                <strong>X:</strong>{" "}
-                                {iteration.x.map((value) => value.toFixed(6)).join(", ")}
-                            </p>
-                            <p>
-                                <strong>Error:</strong> {iteration.error.toFixed(6)}
-                            </p>
-                        </div>
+            <div>
+                <h3 className="text-xl font-semibold mb-2">Iterations</h3>
+                <table className="table-auto w-full border-collapse border border-gray-300">
+                    <thead>
+                    <tr>
+                        <th className="border border-gray-300 px-4 py-2">Step</th>
+                        <th className="border border-gray-300 px-4 py-2">x</th>
+                        <th className="border border-gray-300 px-4 py-2">Error</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {results.iterations.map((iteration) => (
+                        <tr key={iteration.step}>
+                            <td className="border border-gray-300 px-4 py-2 text-center">
+                                {iteration.step}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-2">
+                                {iteration.x.map((xi, idx) => (
+                                    <span key={idx}>
+                                            x<sub>{idx + 1}</sub> = {xi.toFixed(6)}{" "}
+                                        </span>
+                                ))}
+                            </td>
+                            <td className="border border-gray-300 px-4 py-2 text-center">
+                                {iteration.error.toFixed(6)}
+                            </td>
+                        </tr>
                     ))}
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
     );

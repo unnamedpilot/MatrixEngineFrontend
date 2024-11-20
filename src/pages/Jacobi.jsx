@@ -1,11 +1,11 @@
+// pages/Jacobi.jsx
 import { useState } from "react";
 import { useApi } from "../hooks/useApi";
 import MatrixInput from "../components/MatrixInput";
-import ResultsRenderer from "../components/ResultsRenderer";
 import JacobiResultsRenderer from "../components/JacobiResultsRenderer.jsx";
 
 export default function Jacobi() {
-    const [size, setSize] = useState(""); // Tamaño de la matriz
+    const [size, setSize] = useState(""); // Tamaño de la matriz (como cadena)
     const [matrixA, setMatrixA] = useState([]); // Matriz A
     const [vectorB, setVectorB] = useState([]); // Vector b
     const [initialX, setInitialX] = useState([]); // Vector inicial x0
@@ -17,27 +17,66 @@ export default function Jacobi() {
 
     const { post } = useApi();
 
-    // Control del tamaño, evitando problemas al borrar el primer dígito
-    const handleSizeChange = (value) => {
+    // Manejar cambios en el tamaño de la matriz
+    const handleSizeChange = (e) => {
+        const value = e.target.value.trim();
+        setSize(value);
+
         if (value === "") {
-            setSize("");
+            // Si el valor está vacío, reiniciar matrices
             setMatrixA([]);
             setVectorB([]);
             setInitialX([]);
+            setResults(null);
+            setError("");
             return;
         }
 
         const sizeValue = parseInt(value, 10);
+
         if (!isNaN(sizeValue) && sizeValue > 0) {
-            setSize(sizeValue);
-            setMatrixA(Array(sizeValue).fill(Array(sizeValue).fill("")));
+            // Inicializar Matrix A como una matriz 2D con cadenas vacías
+            const newMatrixA = Array.from({ length: sizeValue }, () => Array(sizeValue).fill(""));
+            setMatrixA(newMatrixA);
+
+            // Inicializar Vector b y Vector inicial X como arrays de cadenas vacías
             setVectorB(Array(sizeValue).fill(""));
             setInitialX(Array(sizeValue).fill(""));
+            setResults(null);
+            setError("");
+        } else {
+            // Si el tamaño es inválido, reiniciar matrices
+            setMatrixA([]);
+            setVectorB([]);
+            setInitialX([]);
             setResults(null);
             setError("");
         }
     };
 
+    // Manejar cambios en Matrix A
+    const handleMatrixAChange = (row, col, value) => {
+        const newMatrixA = matrixA.map((r, rowIndex) =>
+            rowIndex === row
+                ? r.map((cell, colIndex) => (colIndex === col ? (value === "" ? "" : value) : cell))
+                : r
+        );
+        setMatrixA(newMatrixA);
+    };
+
+    // Manejar cambios en Vector b
+    const handleVectorBChange = (index, value) => {
+        const newVectorB = vectorB.map((cell, idx) => (idx === index ? (value === "" ? "" : value) : cell));
+        setVectorB(newVectorB);
+    };
+
+    // Manejar cambios en Vector inicial X
+    const handleInitialXChange = (index, value) => {
+        const newInitialX = initialX.map((cell, idx) => (idx === index ? (value === "" ? "" : value) : cell));
+        setInitialX(newInitialX);
+    };
+
+    // Manejar el envío del formulario
     const handleSubmit = async () => {
         // Convertir los valores a números
         const numericMatrixA = matrixA.map((row) => row.map((value) => parseFloat(value || 0)));
@@ -60,8 +99,13 @@ export default function Jacobi() {
             return;
         }
 
-        if (!tolerance || !maxIterations) {
-            setError("Please provide the tolerance and maximum iterations.");
+        if (!tolerance || isNaN(parseFloat(tolerance)) || parseFloat(tolerance) <= 0) {
+            setError("Please provide a valid positive tolerance.");
+            return;
+        }
+
+        if (!maxIterations || isNaN(parseInt(maxIterations, 10)) || parseInt(maxIterations, 10) <= 0) {
+            setError("Please provide a valid positive number for maximum iterations.");
             return;
         }
 
@@ -79,15 +123,21 @@ export default function Jacobi() {
 
         try {
             const response = await post("/jacobi", requestData);
-            setResults(response);
-            console.log(results);
+            setResults(response.results); // Asumiendo que la respuesta tiene la estructura { results: { ... } }
+            console.log("API response:", response);
         } catch (err) {
-            setError(err.message || "An error occurred while processing your request.");
+            console.error("Submission error:", err);
+            setError(
+                err.message === "Failed to fetch"
+                    ? "The server is unavailable. Please try again later."
+                    : err.message || "An error occurred while processing your request."
+            );
         } finally {
             setLoading(false);
         }
     };
 
+    // Manejar valores de prueba
     const handleTestValues = () => {
         const testMatrixA = [
             [4, -1, 0, 0],
@@ -98,19 +148,22 @@ export default function Jacobi() {
         const testVectorB = [15, 10, 10, 10];
         const testInitialX = [0, 0, 0, 0];
 
-        // Los ceros se gestionan como strings para evitar problemas con `falsy`
-        setSize(4);
-        setMatrixA(
-            testMatrixA.map((row) => row.map((value) => (value === 0 ? "0" : value.toString())))
-        );
-        setVectorB(testVectorB.map((value) => (value === 0 ? "0" : value.toString())));
-        setInitialX(testInitialX.map((value) => (value === 0 ? "0" : value.toString())));
-        setTolerance(0.0001);
-        setMaxIterations(25);
+        // Convertir a cadenas para los campos de entrada
+        const stringMatrixA = testMatrixA.map((row) => row.map((value) => value.toString()));
+        const stringVectorB = testVectorB.map((value) => value.toString());
+        const stringInitialX = testInitialX.map((value) => value.toString());
+
+        setSize("4");
+        setMatrixA(stringMatrixA);
+        setVectorB(stringVectorB);
+        setInitialX(stringInitialX);
+        setTolerance("0.001");
+        setMaxIterations("25");
         setResults(null);
         setError("");
     };
 
+    // Manejar el reinicio del formulario
     const handleReset = () => {
         setSize("");
         setMatrixA([]);
@@ -145,11 +198,11 @@ export default function Jacobi() {
                 size={size}
                 onSizeChange={handleSizeChange}
                 matrixA={matrixA}
-                onMatrixAChange={setMatrixA}
+                onMatrixAChange={handleMatrixAChange}
                 matrixB={vectorB}
-                onMatrixBChange={setVectorB}
+                onMatrixBChange={handleVectorBChange}
                 initialX={initialX}
-                onInitialXChange={setInitialX}
+                onInitialXChange={handleInitialXChange}
             />
 
             <div className="mb-6">
@@ -162,6 +215,9 @@ export default function Jacobi() {
                     value={tolerance}
                     onChange={(e) => setTolerance(e.target.value)}
                     className="border border-purple-300 rounded px-4 py-2 w-full"
+                    min="0.000001"
+                    step="0.000001"
+                    placeholder="Enter tolerance (e.g., 0.001)"
                 />
             </div>
 
@@ -175,6 +231,9 @@ export default function Jacobi() {
                     value={maxIterations}
                     onChange={(e) => setMaxIterations(e.target.value)}
                     className="border border-purple-300 rounded px-4 py-2 w-full"
+                    min="1"
+                    step="1"
+                    placeholder="Enter maximum iterations (e.g., 25)"
                 />
             </div>
 
@@ -185,13 +244,13 @@ export default function Jacobi() {
                 }`}
                 disabled={loading}
             >
-                Submit
+                {loading ? "Submitting..." : "Submit"}
             </button>
 
             {error && <p className="mt-4 text-red-500">{error}</p>}
             {loading && <p className="mt-4">Loading...</p>}
 
-            {results && <JacobiResultsRenderer results={results.result} />}
+            {results && <JacobiResultsRenderer results={results} />}
         </div>
-    );
+    )
 }

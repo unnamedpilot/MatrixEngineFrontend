@@ -1,47 +1,89 @@
+// components/ResultTable.jsx
 import React from "react";
+import PropTypes from "prop-types";
 
 export default function ResultTable({ results }) {
-    if (!results || !results.iteraciones || results.iteraciones.length === 0) {
-        return <p>No results available.</p>;
-    }
+    const { iteraciones, raiz, mensaje } = results;
 
-    // Extract keys dynamically from the first iteration
-    const columns = Object.keys(results.iteraciones[0]);
+    // Verificar si iteraciones es un array
+    const iteracionesArray = Array.isArray(iteraciones) ? iteraciones : [iteraciones];
 
     return (
-        <div>
+        <div className="mt-8">
             <h2 className="text-2xl font-bold mb-4">Results</h2>
-            <table className="table-auto w-full border-collapse border border-purple-300">
-                <thead>
-                <tr>
-                    {columns.map((key) => (
-                        <th
-                            key={key}
-                            className="border border-purple-300 px-4 py-2 capitalize"
-                        >
-                            {key.replace("_", " ")}
-                        </th>
-                    ))}
-                </tr>
-                </thead>
-                <tbody>
-                {results.iteraciones.map((iter, rowIndex) => (
-                    <tr key={rowIndex}>
-                        {columns.map((key) => (
-                            <td
-                                key={`${rowIndex}-${key}`}
-                                className="border border-purple-300 px-4 py-2"
-                            >
-                                {iter[key]}
-                            </td>
+
+            {/* Tabla de Iteraciones */}
+            {iteracionesArray.length > 0 && (
+                <div className="mb-6">
+                    <h3 className="text-xl font-semibold mb-2">Iterations</h3>
+                    <table className="table-auto w-full border-collapse border border-gray-300">
+                        <thead>
+                        <tr>
+                            <th className="border border-gray-300 px-4 py-2">Iteration</th>
+                            <th className="border border-gray-300 px-4 py-2">x₀</th>
+                            <th className="border border-gray-300 px-4 py-2">f(x₀)</th>
+                            <th className="border border-gray-300 px-4 py-2">f'(x₀)</th>
+                            <th className="border border-gray-300 px-4 py-2">x₁</th>
+                            <th className="border border-gray-300 px-4 py-2">Error</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {iteracionesArray.map((iter, index) => (
+                            <tr key={index}>
+                                <td className="border border-gray-300 px-4 py-2 text-center">
+                                    {iter.iteracion || iter}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">
+                                    {iter.x0 || "-"}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">
+                                    {iter.f_x0 || "-"}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">
+                                    {iter.f_prime_x0 || "-"}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">
+                                    {iter.x1 || "-"}
+                                </td>
+                                <td className="border border-gray-300 px-4 py-2 text-center">
+                                    {iter.error || "-"}
+                                </td>
+                            </tr>
                         ))}
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-            {results.mensaje && (
-                <p className="mt-4 text-lg font-semibold">{results.mensaje}</p>
+                        </tbody>
+                    </table>
+                </div>
             )}
+
+            {/* Raíz Encontrada y Mensaje */}
+            <div className="mb-6">
+                <p className="text-lg">
+                    <strong>Root:</strong> {raiz || "-"}
+                </p>
+                <p className="text-lg">
+                    <strong>Message:</strong> {mensaje || "-"}
+                </p>
+            </div>
         </div>
     );
 }
+
+ResultTable.propTypes = {
+    results: PropTypes.shape({
+        iteraciones: PropTypes.oneOfType([
+            PropTypes.arrayOf(
+                PropTypes.shape({
+                    iteracion: PropTypes.number,
+                    x0: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+                    f_x0: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+                    f_prime_x0: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+                    x1: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+                    error: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+                })
+            ),
+            PropTypes.string
+        ]),
+        raiz: PropTypes.string,
+        mensaje: PropTypes.string,
+    }).isRequired,
+};

@@ -1,33 +1,62 @@
-import MatrixRenderer from "./MatrixRenderer.jsx";
+// components/GaussianResults.jsx
+import React from "react";
 
-const GaussianResults = ({ result }) => {
-        if (!result) return null;
+export default function GaussianResults({ augmentedMatrix, solutions }) {
+    console.log("GaussianResults received augmentedMatrix:", augmentedMatrix);
+    console.log("GaussianResults received solutions:", solutions);
 
-        const { matriz_aumentada, soluciones } = result;
+    return (
+        <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-4">Results</h2>
 
-        if (!matriz_aumentada || !soluciones) {
-                console.error("GaussianResults: Missing required data in result", result);
-                return <p>Error: Results data is incomplete or malformed.</p>;
-        }
-
-        return (
-            <div>
-                    {/* Mostrar la matriz aumentada */}
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Augmented Matrix</h2>
-                    <MatrixRenderer matrix={matriz_aumentada} label="Augmented Matrix" />
-
-                    {/* Mostrar las soluciones */}
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Solutions</h2>
-                    <ul>
-                            {soluciones.map((sol, index) => (
-                                <li key={index} className="text-lg">
-                                        <span className="font-bold">{sol.variable}:</span>{" "}
-                                        {sol.valor.toFixed(6)}
-                                </li>
+            <div className="mb-6">
+                <h3 className="text-xl font-semibold mb-2">Augmented Matrix</h3>
+                <table className="table-auto w-full border-collapse border border-gray-300">
+                    <thead>
+                    <tr>
+                        {/* Assuming the last column is Vector b */}
+                        {augmentedMatrix[0].slice(0, -1).map((_, colIndex) => (
+                            <th
+                                key={colIndex}
+                                className="border border-gray-300 px-4 py-2"
+                            >
+                                {`A[${colIndex + 1}]`}
+                            </th>
+                        ))}
+                        <th className="border border-gray-300 px-4 py-2">b</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {augmentedMatrix.map((row, rowIndex) => (
+                        <tr key={rowIndex}>
+                            {row.map((value, colIndex) => (
+                                <td
+                                    key={colIndex}
+                                    className="border border-gray-300 px-4 py-2 text-center"
+                                >
+                                    {value}
+                                </td>
                             ))}
-                    </ul>
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
             </div>
-        );
-};
 
-export default GaussianResults;
+            <div>
+                <h3 className="text-xl font-semibold mb-2">Solutions</h3>
+                {solutions && solutions.length > 0 ? (
+                    <ul className="list-disc list-inside">
+                        {solutions.map((solution, index) => (
+                            <li key={index}>
+                                {`${solution.variable} = ${solution.valor}`}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No solutions found.</p>
+                )}
+            </div>
+        </div>
+    );
+}
