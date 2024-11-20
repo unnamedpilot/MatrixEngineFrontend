@@ -1,5 +1,5 @@
-const BASE_URL = "http://127.0.0.1:8000";
-//import.meta.env.VITE_API_URL || 
+const BASE_URL = import.meta.env.VITE_API_URL ||"http://127.0.0.1:8000";
+
 const apiRequest = async (endpoint, method = "GET", body = null) => {
     const options = {
         method,
@@ -14,15 +14,21 @@ const apiRequest = async (endpoint, method = "GET", body = null) => {
 
     try {
         const response = await fetch(`${BASE_URL}${endpoint}`, options);
+        const responseData = await response.json();
+
         if (!response.ok) {
-            throw new Error(`API error: ${response.statusText}`);
+            const error = new Error(`API error: ${response.statusText}`);
+            error.response = response;
+            error.data = responseData;
+            throw error;
         }
 
-        return await response.json();
+        return responseData;
     } catch (error) {
         console.error("Error in API request:", error);
         throw error;
     }
 };
+
 
 export default apiRequest;
