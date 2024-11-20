@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useApi } from "../hooks/useApi";
+import MatrixInput from "../components/MatrixInput";
 import ResultsRenderer from "../components/ResultsRenderer";
+import MatrixRenderer from "../components/MatrixRenderer";
 
 export default function Cholesky() {
-    const [size, setSize] = useState(""); // Matrix size
-    const [matrixA, setMatrixA] = useState([]); // Matrix A
-    const [matrixB, setMatrixB] = useState([]); // Matrix B
-    const [results, setResults] = useState(null); // Results from the backend
+    const [size, setSize] = useState(""); // Tamaño de la matriz
+    const [matrixA, setMatrixA] = useState([]); // Matriz A
+    const [matrixB, setMatrixB] = useState([]); // Vector b
+    const [results, setResults] = useState(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -22,11 +24,11 @@ export default function Cholesky() {
 
     const handleTestValues = () => {
         const testMatrixA = [
-            [6, 15, 55],
-            [15, 55, 225],
-            [55, 225, 979],
+            ['6', '15', '55'],
+            ['15', '55', '225'],
+            ['55', '225', '979'],
         ];
-        const testMatrixB = [76, 295, 1259];
+        const testMatrixB = ['76', '295', '1259'];
 
         setSize(3);
         setMatrixA(testMatrixA);
@@ -35,64 +37,41 @@ export default function Cholesky() {
         setError("");
     };
 
-    const handleSizeChange = (e) => {
-        const value = parseInt(e.target.value, 10);
-        if (!isNaN(value) && value > 0) {
-            setSize(value);
-            const emptyMatrixA = Array(value).fill(Array(value).fill(""));
-            const emptyMatrixB = Array(value).fill("");
-            setMatrixA(emptyMatrixA);
-            setMatrixB(emptyMatrixB);
-        }
-    };
-
-    const handleMatrixAChange = (row, col, value) => {
-        const newMatrixA = [...matrixA];
-        newMatrixA[row][col] = parseFloat(value);
-        setMatrixA(newMatrixA);
-    };
-
-    const handleMatrixBChange = (row, value) => {
-        const newMatrixB = [...matrixB];
-        newMatrixB[row] = parseFloat(value);
-        setMatrixB(newMatrixB);
-    };
-
     const handleSubmit = async () => {
-        if (!matrixA.length || !matrixB.length) {
+        const numericMatrixA = matrixA.map((row) => row.map((value) => parseFloat(value || 0)));
+        const numericMatrixB = matrixB.map((value) => parseFloat(value || 0));
+
+        if (!numericMatrixA.length || !numericMatrixB.length) {
             setError("Please fill all the matrix fields.");
             return;
         }
 
-        if (matrixA.length !== matrixA[0].length) {
+        if (numericMatrixA.length !== numericMatrixA[0].length) {
             setError("Matrix A must be square.");
             return;
         }
 
-        if (matrixA.length !== matrixB.length) {
-            setError("The size of Matrix A must match the size of Matrix B.");
+        if (numericMatrixA.length !== numericMatrixB.length) {
+            setError("The size of Matrix A must match the size of Vector b.");
             return;
         }
-
-        const requestData = { A: matrixA, b: matrixB };
-        console.log("Request Data:", requestData); // Log para confirmar datos enviados
 
         setError("");
         setLoading(true);
         setResults(null);
 
+        const requestData = { A: numericMatrixA, b: numericMatrixB };
+
         try {
             const { result } = await post("/cholesky", requestData);
-            console.log("Response Data:", result);
+            console.log(result);
             setResults(result);
         } catch (err) {
-            console.error("Submit Error:", err.message); // Log para depurar errores
-            setError(err.message);
+            setError(err.message || "Failed to fetch results. Please try again later.");
         } finally {
             setLoading(false);
         }
     };
-
 
     return (
         <div className="p-8 bg-white text-purple-700 min-h-screen">
@@ -106,7 +85,6 @@ export default function Cholesky() {
                     >
                         Test Values
                     </button>
-
                     <button
                         onClick={handleReset}
                         className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded"
@@ -116,67 +94,71 @@ export default function Cholesky() {
                 </div>
             </div>
 
-            <div className="mb-6">
-                <label htmlFor="size" className="block text-lg font-semibold mb-2">
-                    Matrix size (n x n):
-                </label>
-                <input
-                    type="number"
-                    id="size"
-                    value={size}
-                    onChange={handleSizeChange}
-                    className="border border-purple-300 rounded px-4 py-2 w-full"
-                />
-            </div>
+            <MatrixInput
+                size={size}
+                onSizeChange={setSize}
+                matrixA={matrixA}
+                onMatrixAChange={setMatrixA}
+                matrixB={matrixB}
+                onMatrixBChange={setMatrixB}
+            />
 
-            {size > 0 && (
-                <div className="grid grid-cols-2 gap-8">
-                    <div>
-                        <h2 className="text-xl font-semibold mb-4">Matrix A</h2>
-                        {matrixA.map((row, rowIndex) => (
-                            <div key={rowIndex} className="flex space-x-2">
-                                {row.map((value, colIndex) => (
-                                    <input
-                                        key={`${rowIndex}-${colIndex}`}
-                                        type="number"
-                                        value={value}
-                                        onChange={(e) =>
-                                            handleMatrixAChange(rowIndex, colIndex, e.target.value)
-                                        }
-                                        className="border border-purple-300 rounded px-2 py-1 w-16 text-center"
-                                    />
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-semibold mb-4">Matrix B</h2>
-                        {matrixB.map((value, rowIndex) => (
-                            <input
-                                key={`b-${rowIndex}`}
-                                type="number"
-                                value={value}
-                                onChange={(e) => handleMatrixBChange(rowIndex, e.target.value)}
-                                className="border border-purple-300 rounded px-2 py-1 w-16 text-center"
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {size > 0 && (
-                <button
-                    onClick={handleSubmit}
-                    className="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-semibold px-6 py-2 rounded"
-                >
-                    Submit
-                </button>
-            )}
+            <button
+                onClick={handleSubmit}
+                className="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-semibold px-6 py-2 rounded"
+            >
+                Submit
+            </button>
 
             {error && <p className="mt-4 text-red-500">{error}</p>}
             {loading && <p className="mt-4">Loading...</p>}
 
-            {results && <ResultsRenderer results={results} />}
+            {results && (
+                <div>
+                    <h2 className="text-2xl font-bold mb-4">Results</h2>
+
+                    {/* Vector solución */}
+                    <div className="mb-4">
+                        <h3 className="text-xl font-semibold">Solution:</h3>
+                        <ul className="list-disc list-inside">
+                            {results.solution.map((value, index) => (
+                                <li key={index}>
+                                    x{index + 1}: {value.toFixed(6)}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    {/* Matrices L y U */}
+                    <div className="grid grid-cols-2 gap-4 mb-8">
+                        <MatrixRenderer
+                            matrix={results.lower_triangular_matrix}
+                            label="Lower Triangular Matrix (L)"
+                        />
+                        <MatrixRenderer
+                            matrix={results.upper_triangular_matrix}
+                            label="Upper Triangular Matrix (U)"
+                        />
+                    </div>
+
+
+                    {/* Etapas */}
+                    <div>
+                        <h3 className="text-xl font-semibold mb-2">Stages:</h3>
+                        {results.stages.map((stage, index) => (
+                            <div key={index} className="mb-4">
+                                <h4 className="text-lg font-semibold">Stage {stage.etapa}</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <MatrixRenderer matrix={stage.L} label="L" />
+                                    <MatrixRenderer matrix={stage.U} label="U" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                </div>
+            )}
+
         </div>
     );
 }

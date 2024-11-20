@@ -3,7 +3,7 @@ import { useApi } from "../hooks/useApi";
 import MatrixInput from "../components/MatrixInput";
 import ResultsRenderer from "../components/ResultsRenderer";
 
-export default function Doolittle() {
+export default function LuPartial() {
     const [size, setSize] = useState(""); // Tamaño de la matriz
     const [matrixA, setMatrixA] = useState([]); // Matriz A
     const [matrixB, setMatrixB] = useState([]); // Vector b
@@ -41,21 +41,6 @@ export default function Doolittle() {
         const numericMatrixA = matrixA.map((row) => row.map((value) => parseFloat(value || 0)));
         const numericMatrixB = matrixB.map((value) => parseFloat(value || 0));
 
-        if (!numericMatrixA.length || !numericMatrixB.length) {
-            setError("Please fill all the matrix fields.");
-            return;
-        }
-
-        if (numericMatrixA.length !== numericMatrixA[0].length) {
-            setError("Matrix A must be square.");
-            return;
-        }
-
-        if (numericMatrixA.length !== numericMatrixB.length) {
-            setError("The size of Matrix A must match the size of Vector b.");
-            return;
-        }
-
         setError("");
         setLoading(true);
         setResults(null);
@@ -63,10 +48,10 @@ export default function Doolittle() {
         const requestData = { A: numericMatrixA, b: numericMatrixB };
 
         try {
-            const { result } = await post("/dolittle", requestData);
+            const { result } = await post("/LUpartial", requestData);
             setResults(result);
         } catch (err) {
-            setError(err.message || "Failed to fetch results. Please try again later.");
+            setError("Failed to fetch results. Please try again later.");
         } finally {
             setLoading(false);
         }
@@ -74,23 +59,21 @@ export default function Doolittle() {
 
     return (
         <div className="p-8 bg-white text-purple-700 min-h-screen">
-            <h1 className="text-4xl font-bold mb-4">Doolittle Method</h1>
+            <h1 className="text-4xl font-bold mb-4">LU Partial</h1>
 
             <div className="flex justify-between items-center mb-6">
-                <div className="flex space-x-4">
-                    <button
-                        onClick={handleTestValues}
-                        className="bg-purple-500 hover:bg-purple-600 text-white font-semibold px-4 py-2 rounded"
-                    >
-                        Test Values
-                    </button>
-                    <button
-                        onClick={handleReset}
-                        className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded"
-                    >
-                        Reset
-                    </button>
-                </div>
+                <button
+                    onClick={handleTestValues}
+                    className="bg-purple-500 hover:bg-purple-600 text-white font-semibold px-4 py-2 rounded"
+                >
+                    Test Values
+                </button>
+                <button
+                    onClick={handleReset}
+                    className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded"
+                >
+                    Reset
+                </button>
             </div>
 
             <MatrixInput
@@ -112,7 +95,12 @@ export default function Doolittle() {
             {error && <p className="mt-4 text-red-500">{error}</p>}
             {loading && <p className="mt-4">Loading...</p>}
 
-            {results && <ResultsRenderer results={results} />}
+            {results && (
+                <ResultsRenderer
+                    results={results}
+                    additionalMatrices={{ P: results.P }}
+                />
+            )}
         </div>
     );
 }

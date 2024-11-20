@@ -12,15 +12,28 @@ export default function Vandermonde() {
     const { post } = useApi();
 
     const handleSizeChange = (e) => {
-        const value = parseInt(e.target.value, 10);
-        if (!isNaN(value) && value > 0) {
+        const value = e.target.value;
+
+        // Permitir valores vacíos o números positivos
+        if (value === "" || /^[1-9]\d*$/.test(value)) {
             setSize(value);
-            setXValues(Array(value).fill(""));
-            setYValues(Array(value).fill(""));
+
+            // Si el tamaño es válido, actualizar los arreglos X e Y
+            if (value !== "") {
+                const numericSize = parseInt(value, 10);
+                setXValues(Array(numericSize).fill(""));
+                setYValues(Array(numericSize).fill(""));
+            } else {
+                // Vaciar los valores si el tamaño es inválido
+                setXValues([]);
+                setYValues([]);
+            }
+
             setResults(null);
             setError("");
         }
     };
+
 
     const handleXChange = (index, value) => {
         const newXValues = [...xValues];
@@ -48,9 +61,11 @@ export default function Vandermonde() {
 
         try {
             const response = await post("/vandermonde", requestData);
-            setResults(response);
-        } catch (err) {
-            setError(err.message || "An error occurred while processing your request.");
+            console.log("Response:", response);
+            setResults(response)
+        } catch (error) {
+            console.error("Error:", error.message);
+            setError(error.message); // Mostrar el mensaje al usuario
         } finally {
             setLoading(false);
         }

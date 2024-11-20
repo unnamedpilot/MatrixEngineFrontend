@@ -1,18 +1,18 @@
 import { useState } from "react";
 import { useApi } from "../hooks/useApi";
+import MatrixInput from "../components/MatrixInput";
 import ResultsRenderer from "../components/ResultsRenderer";
 
 export default function LuSimple() {
-    const [size, setSize] = useState(""); // Matrix size
-    const [matrixA, setMatrixA] = useState([]); // Matrix A
-    const [matrixB, setMatrixB] = useState([]); // Matrix B
-    const [results, setResults] = useState(null); // Results from the backend
+    const [size, setSize] = useState(""); // Tamaño de la matriz
+    const [matrixA, setMatrixA] = useState([]); // Matriz A
+    const [matrixB, setMatrixB] = useState([]); // Vector b
+    const [results, setResults] = useState(null);
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
     const { post } = useApi();
 
-    // Function to reset all fields
     const handleReset = () => {
         setSize("");
         setMatrixA([]);
@@ -21,15 +21,14 @@ export default function LuSimple() {
         setError("");
     };
 
-    // Function to populate test values
     const handleTestValues = () => {
         const testMatrixA = [
-            [4, -1, 0, 3],
-            [1, 15.5, 3, 8],
-            [0, -1.3, -4, 1.1],
-            [14, 5, -2, 30],
+            ['4', '-1', '0', '3'],
+            ['1', '15.5', '3', '8'],
+            ['0', '-1.3', '-4', '1.1'],
+            ['14', '5', '-2', '30'],
         ];
-        const testMatrixB = [1, 1, 1, 1];
+        const testMatrixB = ['1', '1', '1', '1'];
 
         setSize(4);
         setMatrixA(testMatrixA);
@@ -38,40 +37,30 @@ export default function LuSimple() {
         setError("");
     };
 
-    const handleSizeChange = (e) => {
-        const value = parseInt(e.target.value, 10);
-        if (!isNaN(value) && value > 0) {
-            setSize(value);
-            const emptyMatrixA = Array(value).fill(Array(value).fill(""));
-            const emptyMatrixB = Array(value).fill("");
-            setMatrixA(emptyMatrixA);
-            setMatrixB(emptyMatrixB);
-        }
-    };
-
-    const handleMatrixAChange = (row, col, value) => {
-        const newMatrixA = [...matrixA];
-        newMatrixA[row][col] = parseFloat(value);
-        setMatrixA(newMatrixA);
-    };
-
-    const handleMatrixBChange = (row, value) => {
-        const newMatrixB = [...matrixB];
-        newMatrixB[row] = parseFloat(value);
-        setMatrixB(newMatrixB);
-    };
-
     const handleSubmit = async () => {
-        if (!matrixA.length || !matrixB.length) {
+        const numericMatrixA = matrixA.map((row) => row.map((value) => parseFloat(value || 0)));
+        const numericMatrixB = matrixB.map((value) => parseFloat(value || 0));
+
+        if (!numericMatrixA.length || !numericMatrixB.length) {
             setError("Please fill all the matrix fields.");
             return;
         }
 
+        if (numericMatrixA.length !== numericMatrixA[0].length) {
+            setError("Matrix A must be square.");
+            return;
+        }
+
+        if (numericMatrixA.length !== numericMatrixB.length) {
+            setError("The size of Matrix A must match the size of Vector b.");
+            return;
+        }
+
+        const requestData = { A: numericMatrixA, b: numericMatrixB };
+
         setError("");
         setLoading(true);
         setResults(null);
-
-        const requestData = { A: matrixA, b: matrixB };
 
         try {
             const { result } = await post("/LUsimple", requestData);
@@ -89,7 +78,6 @@ export default function LuSimple() {
 
             <div className="flex justify-between items-center mb-6">
                 <div className="flex space-x-4">
-                    {/* Test Values Button */}
                     <button
                         onClick={handleTestValues}
                         className="bg-purple-500 hover:bg-purple-600 text-white font-semibold px-4 py-2 rounded"
@@ -97,7 +85,6 @@ export default function LuSimple() {
                         Test Values
                     </button>
 
-                    {/* Reset Button */}
                     <button
                         onClick={handleReset}
                         className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded"
@@ -107,62 +94,21 @@ export default function LuSimple() {
                 </div>
             </div>
 
-            <div className="mb-6">
-                <label htmlFor="size" className="block text-lg font-semibold mb-2">
-                    Matrix size (n x n):
-                </label>
-                <input
-                    type="number"
-                    id="size"
-                    value={size}
-                    onChange={handleSizeChange}
-                    className="border border-purple-300 rounded px-4 py-2 w-full"
-                />
-            </div>
+            <MatrixInput
+                size={size}
+                onSizeChange={setSize}
+                matrixA={matrixA}
+                onMatrixAChange={setMatrixA}
+                matrixB={matrixB}
+                onMatrixBChange={setMatrixB}
+            />
 
-            {size > 0 && (
-                <div className="grid grid-cols-2 gap-8">
-                    <div>
-                        <h2 className="text-xl font-semibold mb-4">Matrix A</h2>
-                        {matrixA.map((row, rowIndex) => (
-                            <div key={rowIndex} className="flex space-x-2">
-                                {row.map((value, colIndex) => (
-                                    <input
-                                        key={`${rowIndex}-${colIndex}`}
-                                        type="number"
-                                        value={value}
-                                        onChange={(e) =>
-                                            handleMatrixAChange(rowIndex, colIndex, e.target.value)
-                                        }
-                                        className="border border-purple-300 rounded px-2 py-1 w-16 text-center"
-                                    />
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                    <div>
-                        <h2 className="text-xl font-semibold mb-4">Matrix B</h2>
-                        {matrixB.map((value, rowIndex) => (
-                            <input
-                                key={`b-${rowIndex}`}
-                                type="number"
-                                value={value}
-                                onChange={(e) => handleMatrixBChange(rowIndex, e.target.value)}
-                                className="border border-purple-300 rounded px-2 py-1 w-16 text-center"
-                            />
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {size > 0 && (
-                <button
-                    onClick={handleSubmit}
-                    className="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-semibold px-6 py-2 rounded"
-                >
-                    Submit
-                </button>
-            )}
+            <button
+                onClick={handleSubmit}
+                className="mt-4 bg-purple-500 hover:bg-purple-600 text-white font-semibold px-6 py-2 rounded"
+            >
+                Submit
+            </button>
 
             {error && <p className="mt-4 text-red-500">{error}</p>}
             {loading && <p className="mt-4">Loading...</p>}

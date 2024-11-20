@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useApi } from "../hooks/useApi";
 import ResultsRenderer from "../components/ResultsRenderer";
+import GaussianResults from "../components/GaussianResults.jsx";
 
 export default function GaussianElimination() {
     const [size, setSize] = useState(""); // Tamaño de la matriz
@@ -178,20 +179,12 @@ export default function GaussianElimination() {
             {loading && <p className="mt-4">Loading...</p>}
 
             {results && (
-                <div>
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Augmented Matrix</h2>
-                    <ResultsRenderer matrix={results.matriz_aumentada} />
-
-                    <h2 className="text-2xl font-bold mt-8 mb-4">Solutions</h2>
-                    <ul>
-                        {results.soluciones.map((sol, index) => (
-                            <li key={index} className="mb-2">
-                                {`${sol.variable}: ${sol.valor.toFixed(6)}`}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
+                <GaussianResults
+                    augmentedMatrix={results.matriz_aumentada}
+                    solutions={results.soluciones}
+                />
             )}
+
         </div>
     );
 }

@@ -53,7 +53,7 @@ export default function IncrementalSearches() {
         };
 
         try {
-            const data = await post("/busquedas-incrementales", requestData);
+            const data = await post("/incremental_search", requestData);
             setResults(data);
         } catch (err) {
             setError("Failed to fetch results. Please try again.");

@@ -13,7 +13,7 @@ import MultipleRoots from "./pages/MultipleRoots.jsx";
 import NewtonMethod from "./pages/NewtonRaphson.jsx";
 import FixedPoint from "./pages/FixedPoint.jsx";
 import SecantMethod from "./pages/Secant.jsx";
-import LuPartial from "./components/LuPartial.jsx";
+import LuPartial from "./pages/LuPartial.jsx";
 import Crout from "./pages/Crout.jsx";
 import Doolittle from "./pages/doLittle.jsx";
 import Cholesky from "./pages/Cholesky.jsx";

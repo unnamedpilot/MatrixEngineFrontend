@@ -54,6 +54,7 @@ export default function Bisection() {
 
         try {
             const data = await post("/biseccion", requestData);
+            console.log(requestData);
             setResults(data);
         } catch (err) {
             setError(
