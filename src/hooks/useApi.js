@@ -22,10 +22,11 @@ export const useApi = () => {
     };
 
     const handleHttpError = (error) => {
-        console.log("El error es el siguiente: " + error.response);
+        console.log("El error es el siguiente: ", error); // Muestra todo el objeto de error
+
         if (error.response) {
             const status = error.response.status;
-            const detail = error.response.data?.detail || error.response.statusText;
+            const detail = error.data?.detail || error.response.statusText;
 
             switch (status) {
                 case 400:
@@ -51,6 +52,7 @@ export const useApi = () => {
             return new Error("An unexpected error occurred. Please try again.");
         }
     };
+
 
     return { post, get };
 };
