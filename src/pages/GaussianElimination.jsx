@@ -68,6 +68,7 @@ export default function GaussianElimination() {
         try {
             const data = await post("/gaussian_elimination", requestData);
             setResults(data);
+            console.log(data);
         } catch (err) {
             setError(err.message || "An error occurred while processing your request.");
         } finally {
@@ -180,8 +181,8 @@ export default function GaussianElimination() {
 
             {results && (
                 <GaussianResults
-                    augmentedMatrix={results.matriz_aumentada}
-                    solutions={results.soluciones}
+                    augmentedMatrix={results.result.matriz_aumentada}
+                    solutions={results.result.soluciones}
                 />
             )}
 

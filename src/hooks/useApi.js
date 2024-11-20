@@ -4,43 +4,50 @@ export const useApi = () => {
     const post = async (endpoint, body) => {
         try {
             const response = await apiRequest(endpoint, "POST", body);
-            return response;
+            return response; // Asegúrate de retornar la respuesta aquí
         } catch (error) {
-            throw handleHttpError(error); // Manejamos y lanzamos el error
+            console.log(error.toString())
+            handleHttpError(error);
         }
     };
+
 
     const get = async (endpoint) => {
         try {
             const response = await apiRequest(endpoint, "GET");
             return response;
         } catch (error) {
-            throw handleHttpError(error); // Igual que en post
+            handleHttpError(error);
         }
     };
 
     const handleHttpError = (error) => {
+        console.log("El error es el siguiente: " + error.response);
         if (error.response) {
-            // Si el servidor devuelve un error con respuesta
             const status = error.response.status;
             const detail = error.response.data?.detail || error.response.statusText;
 
-            // Devuelve un mensaje claro basado en el estado HTTP
             switch (status) {
                 case 400:
-                    return new Error(`Bad Request: ${detail}`);
+                    throw new Error(`Bad Request: ${detail}`);
                 case 404:
-                    return new Error(`Not Found: ${detail}`);
+                    throw new Error(`Not Found: ${detail}`);
                 case 500:
-                    return new Error(`Internal Server Error: ${detail}`);
+                    throw new Error(`Internal Server Error: ${detail}`);
                 default:
-                    return new Error(`HTTP Error ${status}: ${detail}`);
+                    throw new Error(`HTTP Error ${status}: ${detail}`);
             }
+        } else if (error.json) {
+            // Si el error tiene un cuerpo JSON (en caso de respuesta con error)
+            return error.json().then((json) => {
+                const detail = json.detail || "Unknown error occurred";
+                return new Error(`HTTP Error: ${detail}`);
+            });
         } else if (error.request) {
-            // Si no hay respuesta del servidor
+            // Si no se recibió respuesta del servidor
             return new Error("No response received from the server. Please check your connection.");
         } else {
-            // Otros errores
+            // Otros errores desconocidos
             return new Error("An unexpected error occurred. Please try again.");
         }
     };

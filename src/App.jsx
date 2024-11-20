@@ -21,6 +21,7 @@ import GaussSeidel from "./pages/GaussSeidel.jsx";
 import Vandermonde from "./pages/Vandermonde.jsx";
 import GaussianElimination from "./pages/GaussianElimination.jsx";
 import PartialPivoting from "./pages/PartialPivoting.jsx";
+import Jacobi from "./pages/Jacobi.jsx";
 
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
                     <Route path="methods/vandermonde" element={<Vandermonde />} />
                     <Route path="methods/gaussian-elimination" element={<GaussianElimination />} />
                     <Route path="methods/partial-pivoting" element={<PartialPivoting />} />
+                    <Route path="methods/jacobi" element={<Jacobi />} />
 
                 </Route>
             </Routes>
